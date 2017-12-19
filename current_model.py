@@ -18,29 +18,29 @@ x2 = Dropout(0.2)(x2)
 
 x = Concatenate(axis=3)([x1,x2])
     
-    #conv-block
+#conv-block
 x = Conv2D(128, (3, 3), activation='relu')(x)
 x = MaxPooling2D((2, 2), strides=(2, 2))(x)
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
 
-    #conv-block
+#conv-block
 x = Conv2D(256, (3, 3), activation='relu')(x)
 x = MaxPooling2D((2, 2), strides=(2, 2))(x)
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
     
-    #flatten
+#flatten
 x = Flatten()(x)
 angle_input = Input(shape=[1], name='angle_input')
 merged = Concatenate()([x, angle_input])
 
-    #dense-block
+#dense-block
 x = Dense(513, activation='relu')(merged)
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
 
-    #dense-block
+#dense-block
 x = Dense(256, activation='relu')(x)
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
