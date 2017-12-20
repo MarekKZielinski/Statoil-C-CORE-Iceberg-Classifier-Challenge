@@ -31,13 +31,18 @@ aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
 x1 = InputBlock(main_input, prefix='m_input')
 x2 = InputBlock(aux_input, prefix='a_input')
 x3 = model_denoise(aux_input_nn)
-x3 = InputBlock(x3,dropout=0.5, prefix='a_input_nn')
+x3 = InputBlock(x3,dropout=0.2, prefix='a_input_nn')
 
 x = Concatenate(axis=3)([x1,x2,x3])
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
 
-x = InceptionBlock(x, prefix='main_path')
+x = InceptionBlock(x, prefix='main_path1')
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+x = InceptionBlock(x, prefix='main_path2')
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
 
 #conv-block
 x = Conv2D(128, (3, 3), activation='relu')(x)
