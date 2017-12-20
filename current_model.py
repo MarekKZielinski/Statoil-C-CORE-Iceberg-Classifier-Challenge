@@ -19,12 +19,14 @@ x2 = Dropout(0.2)(x2)
 x = Concatenate(axis=3)([x1,x2])
     
 #conv-block
+x = ZeroPadding2D()(x)
 x = Conv2D(128, (3, 3), activation='relu')(x)
 x = MaxPooling2D((2, 2), strides=(2, 2))(x)
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
 
 #conv-block
+x = ZeroPadding2D()(x)
 x = Conv2D(256, (3, 3), activation='relu')(x)
 x = MaxPooling2D((2, 2), strides=(2, 2))(x)
 x = BatchNormalization()(x)
