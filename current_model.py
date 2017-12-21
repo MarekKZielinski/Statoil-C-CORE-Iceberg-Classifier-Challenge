@@ -10,14 +10,14 @@ def InputBlock(x, dropout=0.2, prefix=''):
 
 main_input = Input(shape=(75,75,2), name='main_input')
 aux_input = Input(shape=(75,75,3), name='aux_input')
-#aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
+aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
 
 x1 = InputBlock(main_input, prefix='m_input')
 x2 = InputBlock(aux_input, prefix='a_input')
-#x3 = model_denoise(aux_input_nn)
-#x3 = InputBlock(x3,dropout=0.2, prefix='a_input_nn')
+x3 = model_denoise(aux_input_nn)
+x3 = InputBlock(x3,dropout=0.2, prefix='a_input_nn')
 
-x = Concatenate(axis=3)([x1,x2])
+x = Concatenate(axis=3)([x1,x2,x3])
 #x = BatchNormalization()(x)
 #x = Dropout(0.2)(x)
 
@@ -51,7 +51,7 @@ x = Dropout(0.2)(x)
 
 main_output = Dense(1, activation='sigmoid', name='main_output')(x)
 model_f = Model(inputs=[main_input,aux_input, 
-                        #aux_input_nn, 
+                        aux_input_nn, 
                         angle_input], 
                         outputs=[main_output])
 
