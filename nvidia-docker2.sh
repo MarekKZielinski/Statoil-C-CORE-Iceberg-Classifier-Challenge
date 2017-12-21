@@ -11,3 +11,4 @@ apt-get install htop
 pip3 install pydot
 apt-get install graphviz
 pip3 install graphviz
+apt-get install nano
