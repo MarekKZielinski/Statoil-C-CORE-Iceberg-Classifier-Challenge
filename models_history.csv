@@ -1513,3 +1513,183 @@ model_f = Model(inputs=[main_input,aux_input,
 model_f.compile(optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0),
 loss='binary_crossentropy',
 metrics=['accuracy'])","2 CNN inputs 3,3 conv filters - 3rd input nn denoising, na=0"
+2017_12_21_17_05_12,55,0.20227563393876907,0.20061509155812748,0.9180851205866387,0.9126559919851986,37,0.924468099310043,0.2193002167710646,0.20885209485571435,0.9028520705228184,L:\Data Science\GIT\Statoil-C-CORE-Iceberg-Classifier-Challenge\models\model.CNN_2017_12_21_v21_2017_12_21_17_05_12.hdf5,L:\Data Science\GIT\Statoil-C-CORE-Iceberg-Classifier-Challenge\models\weights.CNN_2017_12_21_v21_2017_12_21_17_05_12.hdf5,"
+def InputBlock(x, dropout=0.2, prefix=''):
+    #conv layers for input
+    x = BatchNormalization()(x)
+    x = Conv2D(64, (3,3), activation='relu')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout)(x) 
+    return(x)
+
+main_input = Input(shape=(75,75,2), name='main_input')
+aux_input = Input(shape=(75,75,3), name='aux_input')
+aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
+
+x1 = InputBlock(main_input, prefix='m_input')
+x2 = InputBlock(aux_input, prefix='a_input')
+x3 = model_denoise(aux_input_nn)
+x3 = InputBlock(x3,dropout=0.2, prefix='a_input_nn')
+
+x = Concatenate(axis=3)([x1,x2,x3])
+#x = BatchNormalization()(x)
+#x = Dropout(0.2)(x)
+
+#conv-block
+x = Conv2D(128, (3, 3), activation='relu')(x)
+x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+#conv-block
+x = Conv2D(256, (3, 3), activation='relu')(x)
+x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+    
+#flatten
+x = Flatten()(x)
+angle_input = Input(shape=[1], name='angle_input')
+#x1 = BatchNormalization()(angle_input)
+merged = Concatenate()([x, angle_input])
+
+#dense-block
+x = Dense(513, activation='relu')(merged)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+#dense-block
+x = Dense(256, activation='relu')(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+main_output = Dense(1, activation='sigmoid', name='main_output')(x)
+model_f = Model(inputs=[main_input,aux_input, 
+                        aux_input_nn, 
+                        angle_input], 
+                        outputs=[main_output])
+
+model_f.compile(optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0),
+loss='binary_crossentropy',
+metrics=['accuracy'])","2 CNN inputs 3,3 conv filters - 3rd input nn denoising, na=0"
+2017_12_24_03_38_11,52,0.18250039086696948,0.19161746248523182,0.9351063992114778,0.9260249788110907,52,0.9351063992114778,0.19161746248523182,0.18250039086696948,0.9260249788110907,L:\Data Science\GIT\Statoil-C-CORE-Iceberg-Classifier-Challenge\models\model.CNN_2017_12_21_v21_2017_12_24_03_38_11.hdf5,L:\Data Science\GIT\Statoil-C-CORE-Iceberg-Classifier-Challenge\models\weights.CNN_2017_12_21_v21_2017_12_24_03_38_11.hdf5,"
+def InputBlock(x, dropout=0.2, prefix=''):
+    #conv layers for input
+    x = BatchNormalization()(x)
+    x = Conv2D(64, (3,3), activation='relu')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout)(x) 
+    return(x)
+
+main_input = Input(shape=(75,75,2), name='main_input')
+aux_input = Input(shape=(75,75,3), name='aux_input')
+#aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
+
+x1 = InputBlock(main_input, prefix='m_input')
+x2 = InputBlock(aux_input, prefix='a_input')
+#x3 = model_denoise(aux_input_nn)
+#x3 = InputBlock(x3,dropout=0.2, prefix='a_input_nn')
+
+x = Concatenate(axis=3)([x1,x2])
+#x = BatchNormalization()(x)
+#x = Dropout(0.2)(x)
+
+#conv-block
+x = Conv2D(128, (3, 3), activation='relu')(x)
+x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+#conv-block
+x = Conv2D(256, (3, 3), activation='relu')(x)
+x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+    
+#flatten
+x = Flatten()(x)
+angle_input = Input(shape=[1], name='angle_input')
+#x1 = BatchNormalization()(angle_input)
+merged = Concatenate()([x, angle_input])
+
+#dense-block
+x = Dense(513, activation='relu')(merged)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+#dense-block
+x = Dense(256, activation='relu')(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+main_output = Dense(1, activation='sigmoid', name='main_output')(x)
+model_f = Model(inputs=[main_input,aux_input, 
+                        #aux_input_nn, 
+                        angle_input], 
+                        outputs=[main_output])
+
+model_f.compile(optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0),
+loss='binary_crossentropy',
+metrics=['accuracy'])","2 CNN inputs 3,3 conv filters - 3rd input nn denoising, na=0"
+2017_12_24_04_49_55,63,0.16803147874701138,0.15066911104847402,0.9376996805111821,0.940285226240515,61,0.9402618657937807,0.17461426093935328,0.17500602747824306,0.936720164383159,L:\Data Science\GIT\Statoil-C-CORE-Iceberg-Classifier-Challenge\models\model.CNN_2017_12_21_v21_2017_12_24_04_49_55.hdf5,L:\Data Science\GIT\Statoil-C-CORE-Iceberg-Classifier-Challenge\models\weights.CNN_2017_12_21_v21_2017_12_24_04_49_55.hdf5,"
+def InputBlock(x, dropout=0.2, prefix=''):
+    #conv layers for input
+    x = BatchNormalization()(x)
+    x = Conv2D(64, (3,3), activation='relu')(x)
+    x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+    x = BatchNormalization()(x)
+    x = Dropout(dropout)(x) 
+    return(x)
+
+main_input = Input(shape=(75,75,2), name='main_input')
+aux_input = Input(shape=(75,75,3), name='aux_input')
+#aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
+
+x1 = InputBlock(main_input, prefix='m_input')
+x2 = InputBlock(aux_input, prefix='a_input')
+#x3 = model_denoise(aux_input_nn)
+#x3 = InputBlock(x3,dropout=0.2, prefix='a_input_nn')
+
+x = Concatenate(axis=3)([x1,x2])
+#x = BatchNormalization()(x)
+#x = Dropout(0.2)(x)
+
+#conv-block
+x = Conv2D(128, (3, 3), activation='relu')(x)
+x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+#conv-block
+x = Conv2D(256, (3, 3), activation='relu')(x)
+x = MaxPooling2D((2, 2), strides=(2, 2))(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+    
+#flatten
+x = Flatten()(x)
+angle_input = Input(shape=[1], name='angle_input')
+#x1 = BatchNormalization()(angle_input)
+merged = Concatenate()([x, angle_input])
+
+#dense-block
+x = Dense(513, activation='relu')(merged)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+#dense-block
+x = Dense(256, activation='relu')(x)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+main_output = Dense(1, activation='sigmoid', name='main_output')(x)
+model_f = Model(inputs=[main_input,aux_input, 
+                        #aux_input_nn, 
+                        angle_input], 
+                        outputs=[main_output])
+
+model_f.compile(optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0),
+loss='binary_crossentropy',
+metrics=['accuracy'])","2 CNN inputs 3,3 conv filters - 3rd input nn denoising, na=0"
