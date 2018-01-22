@@ -70,7 +70,7 @@ class CyclicLR(Callback):
         self.step_size = step_size
         self.mode = mode
         self.gamma = gamma
-	self.beta = beta
+        self.beta = beta
         if scale_fn == None:
             if self.mode == 'triangular':
                 self.scale_fn = lambda x: 1.
