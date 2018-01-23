@@ -62,7 +62,7 @@ class CyclicLR(Callback):
     """
 
     def __init__(self, base_lr=0.001, max_lr=0.006, step_size=2000., mode='triangular',
-                 gamma=1., beta=0.66, scale_fn=None, scale_mode='cycle'):
+                 gamma=1., beta=0.66, theta=0.11, scale_fn=None, scale_mode='cycle'):
         super(CyclicLR, self).__init__()
 
         self.base_lr = base_lr
@@ -71,6 +71,7 @@ class CyclicLR(Callback):
         self.mode = mode
         self.gamma = gamma
         self.beta = beta
+        self.theta = theta
         self.scale_mode = 'cycle'
         if scale_fn == None:
             if self.mode == 'triangular':
@@ -81,7 +82,8 @@ class CyclicLR(Callback):
                 self.scale_mode = 'cycle'
             elif self.mode == 'triangular3':
                 self.scale_fn = lambda x: 1/((1+beta)**(x-1))
-                self.scale_mode = 'cycle'
+                self.scale_base = lambda x: 1/((1+theta)**(x-1))
+                self.scale_mode = 'cycle2'
             elif self.mode == 'exp_range':
                 self.scale_fn = lambda x: gamma**(x)
                 self.scale_mode = 'iterations'
@@ -111,6 +113,9 @@ class CyclicLR(Callback):
         cycle = np.floor(1+self.clr_iterations/(2*self.step_size))
         x = np.abs(self.clr_iterations/self.step_size - 2*cycle + 1)
         if self.scale_mode == 'cycle':
+            return self.base_lr + (self.max_lr-self.base_lr)*np.maximum(0, (1-x))*self.scale_fn(cycle)
+        elif self.scale_mode == 'cycle2':
+            self.base_lr = self.base_lr*self.scale_fn(cycle)
             return self.base_lr + (self.max_lr-self.base_lr)*np.maximum(0, (1-x))*self.scale_fn(cycle)
         else:
             return self.base_lr + (self.max_lr-self.base_lr)*np.maximum(0, (1-x))*self.scale_fn(self.clr_iterations)
