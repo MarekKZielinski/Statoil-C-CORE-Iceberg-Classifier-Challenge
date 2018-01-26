@@ -62,7 +62,7 @@ class CyclicLR(Callback):
     """
 
     def __init__(self, base_lr=0.001, max_lr=0.006, step_size=2000., mode='triangular',
-                 gamma=1., beta=0.66, theta=0.11, scale_fn=None, scale_mode='cycle'):
+                 gamma=1., beta=0.66, theta=0.11, step_patience=5, scale_fn=None, scale_mode='cycle'):
         super(CyclicLR, self).__init__()
 
         self.base_lr = base_lr
@@ -72,6 +72,7 @@ class CyclicLR(Callback):
         self.gamma = gamma
         self.beta = beta
         self.theta = theta
+        self.step_patience = step_patience
         self.scale_mode = 'cycle'
         if scale_fn == None:
             if self.mode == 'triangular':
@@ -84,6 +85,10 @@ class CyclicLR(Callback):
                 self.scale_fn = lambda x: 1/((1+beta)**(x-1))
                 self.scale_base = lambda x: 1/((1+theta)**(x-1))
                 self.scale_mode = 'cycle2'
+            elif self.mode == 'triangular4':
+                self.scale_fn = lambda x: 1/((1+beta)**(x-1))
+                self.scale_base = lambda x: 1/((1+theta)**(x-1))
+                self.scale_mode = 'cycle3'  
             elif self.mode == 'exp_range':
                 self.scale_fn = lambda x: gamma**(x)
                 self.scale_mode = 'iterations'
@@ -91,6 +96,7 @@ class CyclicLR(Callback):
             self.scale_fn = scale_fn
             self.scale_mode = scale_mode
         self.clr_iterations = 0.
+        self.clr_next_step = 0.
         self.trn_iterations = 0.
         self.history = {}
 
@@ -108,15 +114,21 @@ class CyclicLR(Callback):
         if new_step_size != None:
             self.step_size = new_step_size
         self.clr_iterations = 0.
+        self.clr_next_step = 0
         
     def clr(self):
-        cycle = np.floor(1+self.clr_iterations/(2*self.step_size))
-        x = np.abs(self.clr_iterations/self.step_size - 2*cycle + 1)
+        cycle = np.floor(1+(self.clr_iterations)/(2*self.step_size))
+        x = np.abs((self.clr_iterations)/self.step_size - 2*cycle + 1)
+        x1 = max(0,((self.clr_iterations - self.clr_next_step)/(2*self.step_size)) - cycle + 1)
         if self.scale_mode == 'cycle':
             return self.base_lr + (self.max_lr-self.base_lr)*np.maximum(0, (1-x))*self.scale_fn(cycle)
         elif self.scale_mode == 'cycle2':
-            self.base_lr = self.base_lr*self.scale_fn(cycle)
+            self.base_lr = self.base_lr*self.scale_base(cycle)
             return self.base_lr + (self.max_lr-self.base_lr)*np.maximum(0, (1-x))*self.scale_fn(cycle)
+        elif self.scale_mode == 'cycle3':
+            base_lr = self.base_lr*self.scale_base(cycle)
+            max_lr = self.max_lr*self.scale_fn(cycle)
+            return max_lr - (max_lr-base_lr)*np.maximum(0, x1**self.gamma)
         else:
             return self.base_lr + (self.max_lr-self.base_lr)*np.maximum(0, (1-x))*self.scale_fn(self.clr_iterations)
         
@@ -133,6 +145,9 @@ class CyclicLR(Callback):
         logs = logs or {}
         self.trn_iterations += 1
         self.clr_iterations += 1
+        self.clr_next_step += 1
+        if self.clr_next_step >= self.step_patience:
+            self.clr_next_step = 0.
         K.set_value(self.model.optimizer.lr, self.clr())
 
         self.history.setdefault('lr', []).append(K.get_value(self.model.optimizer.lr))
