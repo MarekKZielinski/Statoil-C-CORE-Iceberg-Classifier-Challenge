@@ -24,38 +24,51 @@ def ConvBlock(x, filters=64, dropout=0.2, prefix=''):
     x = Conv2D(filters, (3,3), activation='relu')(x)
     x = MaxPooling2D((2, 2), strides=(2, 2))(x)
     x = BatchNormalization()(x)
-    x = Dropout(dropout)(x) 
+    x = Dropout(dropout)(x)
+    return x
     
 def InputBlock(x, dropout=0.2, prefix=''):
     #conv layers for input
     x = BatchNormalization()(x)
-    x = SimpleInceptionBlock(x, prefix=prefix+'_1_')
-    x = SimpleInceptionBlock(x, prefix=prefix+'_2_')
-    #x = ConvBlock(x)
-    #x = ConvBlock(x)
+    #x = SimpleInceptionBlock(x, prefix=prefix+'_1_')
+    #x = SimpleInceptionBlock(x, prefix=prefix+'_2_')
+    x = ConvBlock(x, 64)
+    x = ConvBlock(x, 128)
+    x = ConvBlock(x, 256)
+    x = ConvBlock(x, 512)
     return(x)
 
 main_input = Input(shape=(75,75,2), name='main_input')
-aux_input = Input(shape=(75,75,3), name='aux_input')
+aux_input = Input(shape=(75,75,2), name='aux_input')
+band1_input = Input(shape=(75,75,1), name='band1_input')
+band2_input = Input(shape=(75,75,1), name='band2_input')
+band1t_input = Input(shape=(75,75,1), name='band1_t_input')
+band2t_input = Input(shape=(75,75,1), name='band2_t_input')
+band3_input = Input(shape=(75,75,1), name='band3_input')
     #aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
 
 x1 = InputBlock(main_input, prefix='m_input')
 x2 = InputBlock(aux_input, prefix='a_input')
+x3 = InputBlock(band1_input, prefix='b1_input')
+x4 = InputBlock(band2_input, prefix='b2_input')
+x5 = InputBlock(band1t_input, prefix='b1t_input')
+x6 = InputBlock(band2t_input, prefix='b2t_input')
+x7 = InputBlock(band3_input, prefix='b3_input')
     #x3 = model_denoise(aux_input_nn)
     #x3 = InputBlock(x3,dropout=0.3, prefix='a_input_nn')
 
-    #x = x1
-x = Concatenate(axis=3)([x1,x2])
+#x = x1
+x = Concatenate(axis=3)([x1,x2,x3,x4,x5,x6,x7])
     #x = BatchNormalization()(x)
     #x = Dropout(0.2)(x)
 
     #conv-blocks
-#x = ConvBlock(x, filters=128)
 #x = ConvBlock(x, filters=256)
+#x = ConvBlock(x, filters=512)
 
     #inception blocks
-x = SimpleInceptionBlock(x, filters=128, prefix='main_1')
-x = SimpleInceptionBlock(x, filters=256, prefix='main_2')
+#x = SimpleInceptionBlock(x, filters=128, prefix='main_1')
+#x = SimpleInceptionBlock(x, filters=256, prefix='main_2')
 
     #flatten
 x = Flatten()(x)
@@ -64,7 +77,11 @@ angle_input = Input(shape=[1], name='angle_input')
 merged = Concatenate()([x, angle_input])
     
     #dense-block
-x = Dense(1025, activation='relu')(merged)
+x = Dense(2048, activation='relu')(merged)
+x = BatchNormalization()(x)
+x = Dropout(0.2)(x)
+
+x = Dense(512, activation='relu')(merged)
 x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
     
@@ -74,7 +91,10 @@ x = BatchNormalization()(x)
 x = Dropout(0.2)(x)
     
 main_output = Dense(1, activation='sigmoid', name='main_output')(x)
-model_f = Model(inputs=[main_input,aux_input, 
+model_f = Model(inputs=[main_input, aux_input,
+                        band1_input, band2_input,
+                        band1t_input, band2t_input,
+                        band3_input,
                             #aux_input_nn, 
                             angle_input], 
                             outputs=[main_output])
