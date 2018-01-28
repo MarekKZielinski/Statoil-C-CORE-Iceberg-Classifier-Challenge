@@ -26,6 +26,12 @@ def ConvBlock(x, filters=64, dropout=0.2, prefix=''):
     x = BatchNormalization()(x)
     x = Dropout(dropout)(x)
     return x
+
+def DenseBlock(x, filters=256, dropout=0.2, prefix=''):
+    x = Dense(filters, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dropout(0.2)(x)
+    return x
     
 def InputBlock(x, dropout=0.2, prefix=''):
     #conv layers for input
@@ -38,27 +44,39 @@ def InputBlock(x, dropout=0.2, prefix=''):
     x = ConvBlock(x, 512)
     return(x)
 
-main_input = Input(shape=(75,75,2), name='main_input')
-aux_input = Input(shape=(75,75,2), name='aux_input')
-band1_input = Input(shape=(75,75,1), name='band1_input')
-band2_input = Input(shape=(75,75,1), name='band2_input')
-band1t_input = Input(shape=(75,75,1), name='band1_t_input')
-band2t_input = Input(shape=(75,75,1), name='band2_t_input')
-band3_input = Input(shape=(75,75,1), name='band3_input')
+def build_model(channels=2):
+    main_input = Input(shape=(75,75,channels), name='main_input')
+    x = InputBlock(main_input, prefix='m_input')
+    x = Flatten()(x)
+    x = DenseBlock(x,1024, dropout='0.4')
+    x = DenseBlock(x,512, dropout='0.3')
+    x = DenseBlock(x,256)
+    main_output = Dense(1, activation='sigmoid', name='main_output')(x)
+    model_f = Model(inputs=[main_input], 
+                   outputs=[main_output])
+    return model_f
+    
+#main_input = Input(shape=(75,75,2), name='main_input')
+#aux_input = Input(shape=(75,75,2), name='aux_input')
+#band1_input = Input(shape=(75,75,1), name='band1_input')
+#band2_input = Input(shape=(75,75,1), name='band2_input')
+#band1t_input = Input(shape=(75,75,1), name='band1_t_input')
+#band2t_input = Input(shape=(75,75,1), name='band2_t_input')
+#band3_input = Input(shape=(75,75,1), name='band3_input')
     #aux_input_nn = Input(shape=(75,75,4), name='aux_input_nn')
 
-x1 = InputBlock(main_input, prefix='m_input')
-x2 = InputBlock(aux_input, prefix='a_input')
-x3 = InputBlock(band1_input, prefix='b1_input')
-x4 = InputBlock(band2_input, prefix='b2_input')
-x5 = InputBlock(band1t_input, prefix='b1t_input')
-x6 = InputBlock(band2t_input, prefix='b2t_input')
-x7 = InputBlock(band3_input, prefix='b3_input')
+#x1 = InputBlock(main_input, prefix='m_input')
+#x2 = InputBlock(aux_input, prefix='a_input')
+#x3 = InputBlock(band1_input, prefix='b1_input')
+#x4 = InputBlock(band2_input, prefix='b2_input')
+#x5 = InputBlock(band1t_input, prefix='b1t_input')
+#x6 = InputBlock(band2t_input, prefix='b2t_input')
+#x7 = InputBlock(band3_input, prefix='b3_input')
     #x3 = model_denoise(aux_input_nn)
     #x3 = InputBlock(x3,dropout=0.3, prefix='a_input_nn')
 
 #x = x1
-x = Concatenate(axis=3)([x1,x2,x3,x4,x5,x6,x7])
+#x = Concatenate(axis=3)([x1,x2,x3,x4,x5,x6,x7])
     #x = BatchNormalization()(x)
     #x = Dropout(0.2)(x)
 
@@ -71,33 +89,35 @@ x = Concatenate(axis=3)([x1,x2,x3,x4,x5,x6,x7])
 #x = SimpleInceptionBlock(x, filters=256, prefix='main_2')
 
     #flatten
-x = Flatten()(x)
-angle_input = Input(shape=[1], name='angle_input')
+#x = Flatten()(x)
+#angle_input = Input(shape=[1], name='angle_input')
     #x1 = BatchNormalization()(angle_input)
-merged = Concatenate()([x, angle_input])
+#merged = Concatenate()([x, angle_input])
     
     #dense-block
-x = Dense(2048, activation='relu')(merged)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
+#x = Dense(2048, activation='relu')(merged)
+#x = BatchNormalization()(x)
+#x = Dropout(0.2)(x)
 
-x = Dense(512, activation='relu')(merged)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
+#x = Dense(512, activation='relu')(merged)
+#x = BatchNormalization()(x)
+#x = Dropout(0.2)(x)
     
     #dense-block
-x = Dense(256, activation='relu')(x)
-x = BatchNormalization()(x)
-x = Dropout(0.2)(x)
+#x = Dense(256, activation='relu')(x)
+#x = BatchNormalization()(x)
+#x = Dropout(0.2)(x)
     
-main_output = Dense(1, activation='sigmoid', name='main_output')(x)
-model_f = Model(inputs=[main_input, aux_input,
-                        band1_input, band2_input,
-                        band1t_input, band2t_input,
-                        band3_input,
-                            #aux_input_nn, 
-                            angle_input], 
-                            outputs=[main_output])
+#main_output = Dense(1, activation='sigmoid', name='main_output')(x)
+#model_f = Model(inputs=[main_input, aux_input,
+#                        band1_input, band2_input,
+#                        band1t_input, band2t_input,
+#                        band3_input,
+#                            #aux_input_nn, 
+#                            angle_input], 
+#                            outputs=[main_output])
+
+model_f = build_model()
 
 model_f.compile(optimizer=Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08, decay=0),
     loss='binary_crossentropy',
